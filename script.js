@@ -1,30 +1,30 @@
 /**
- * خبير البرمجة: تم بناء هذا السكربت لتنظيم الحالة بشكل احترافي
- * يحتوي على إدارة الـ LocalStorage، والتعامل مع الصور، ومحاكاة الـ API.
+ * خبير البرمجة: تم التعديل لتشغيل الواجهة المطابقة للتطبيق.
+ * تمت برمجة الزر الأزرق ليتحول لزر إرسال عند الكتابة.
  */
 
-// --- المتغيرات وحالة التطبيق (State) ---
+// حالة التطبيق
 let chats = JSON.parse(localStorage.getItem('chats')) || {};
 let currentChatId = null;
 let settings = JSON.parse(localStorage.getItem('settings')) || {
     apiKey: '',
-    welcomeText: 'كيف يمكنني مساعدتك اليوم؟',
     isDarkMode: true
 };
 let selectedImageBase64 = null;
 
-// --- عناصر الـ DOM ---
+// عناصر DOM
 const elements = {
     body: document.body,
     themeToggle: document.getElementById('theme-toggle'),
     sidebar: document.getElementById('sidebar'),
-    toggleSidebar: document.getElementById('toggleSidebar') || document.getElementById('toggle-sidebar'), // Fallback
-    newChatBtn: document.getElementById('new-chat-btn'),
+    toggleSidebar: document.getElementById('toggle-sidebar'),
+    newChatBtnHeader: document.getElementById('new-chat-btn-top'),
+    newChatBtnSidebar: document.getElementById('new-chat-btn'),
     chatHistory: document.getElementById('chat-history'),
     welcomeScreen: document.getElementById('welcome-screen'),
     chatContainer: document.getElementById('chat-container'),
     messageInput: document.getElementById('message-input'),
-    sendBtn: document.getElementById('send-btn'),
+    dynamicSendBtn: document.getElementById('dynamic-send-btn'),
     imageUpload: document.getElementById('image-upload'),
     imagePreviewContainer: document.getElementById('image-preview-container'),
     imagePreview: document.getElementById('image-preview'),
@@ -34,13 +34,10 @@ const elements = {
     closeModal: document.querySelector('.close-modal'),
     saveSettingsBtn: document.getElementById('save-settings-btn'),
     clearDataBtn: document.getElementById('clear-data-btn'),
-    welcomeTextInput: document.getElementById('welcome-text-input'),
     apiKeyInput: document.getElementById('api-key-input'),
-    mainWelcomeText: document.getElementById('welcome-text'),
     searchChats: document.getElementById('search-chats')
 };
 
-// --- التهيئة الأولية (Initialization) ---
 function init() {
     applySettings();
     renderChatList();
@@ -51,17 +48,13 @@ function init() {
     }
 }
 
-// --- إدارة الإعدادات والمظهر ---
+// الإعدادات والمظهر
 function applySettings() {
     if (settings.isDarkMode) {
         elements.body.classList.add('dark-mode');
-        elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     } else {
         elements.body.classList.remove('dark-mode');
-        elements.themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
     }
-    elements.mainWelcomeText.innerText = settings.welcomeText;
-    elements.welcomeTextInput.value = settings.welcomeText;
     elements.apiKeyInput.value = settings.apiKey;
 }
 
@@ -71,28 +64,25 @@ elements.themeToggle.addEventListener('click', () => {
     applySettings();
 });
 
-// --- إدارة القائمة الجانبية (Sidebar) ---
+// القائمة الجانبية
 elements.toggleSidebar.addEventListener('click', () => {
     elements.sidebar.classList.toggle('closed');
 });
 
-// --- إدارة المحادثات (Chat Management) ---
-elements.newChatBtn.addEventListener('click', createNewChat);
+// إنشاء المحادثات
+elements.newChatBtnHeader.addEventListener('click', createNewChat);
+elements.newChatBtnSidebar.addEventListener('click', createNewChat);
 
 function createNewChat() {
     currentChatId = Date.now().toString();
-    chats[currentChatId] = {
-        title: 'دردشة جديدة',
-        messages: []
-    };
+    chats[currentChatId] = { title: 'دردشة جديدة', messages: [] };
     saveChats();
     renderChatList();
     showWelcomeScreen();
+    elements.sidebar.classList.add('closed'); // إغلاق القائمة عند إنشاء دردشة
 }
 
-function saveChats() {
-    localStorage.setItem('chats', JSON.stringify(chats));
-}
+function saveChats() { localStorage.setItem('chats', JSON.stringify(chats)); }
 
 function renderChatList(filter = "") {
     elements.chatHistory.innerHTML = '';
@@ -114,32 +104,24 @@ function renderChatList(filter = "") {
     });
 }
 
-elements.searchChats.addEventListener('input', (e) => {
-    renderChatList(e.target.value);
-});
+elements.searchChats.addEventListener('input', (e) => renderChatList(e.target.value));
 
-// يجب جعل الدالة متاحة عالمياً لتعمل مع onclick في HTML
 window.loadChat = function(id) {
     currentChatId = id;
     renderChatList();
     elements.welcomeScreen.style.display = 'none';
     elements.chatContainer.style.display = 'flex';
     elements.chatContainer.innerHTML = '';
-    
-    chats[id].messages.forEach(msg => {
-        appendMessageUI(msg.role, msg.content, msg.image);
-    });
+    chats[id].messages.forEach(msg => appendMessageUI(msg.role, msg.content, msg.image));
     scrollToBottom();
+    elements.sidebar.classList.add('closed');
 }
 
 window.deleteChat = function(id, event) {
-    event.stopPropagation(); // منع فتح المحادثة عند ضغط زر الحذف
+    event.stopPropagation();
     if(confirm('هل أنت متأكد من حذف هذه المحادثة؟')) {
         delete chats[id];
-        if (currentChatId === id) {
-            currentChatId = null;
-            showWelcomeScreen();
-        }
+        if (currentChatId === id) { currentChatId = null; showWelcomeScreen(); }
         saveChats();
         renderChatList();
     }
@@ -151,13 +133,14 @@ function showWelcomeScreen() {
     elements.chatContainer.innerHTML = '';
 }
 
-// دالة لتعبئة حقل النص من الاقتراحات
+// دالة الاقتراحات
 window.fillInput = function(text) {
     elements.messageInput.value = text;
     elements.messageInput.focus();
+    updateSendButtonMode();
 }
 
-// --- التعامل مع الصور (Image Upload) ---
+// التعامل مع الصور
 elements.imageUpload.addEventListener('change', function() {
     const file = this.files[0];
     if (file) {
@@ -165,7 +148,8 @@ elements.imageUpload.addEventListener('change', function() {
         reader.onload = function(e) {
             selectedImageBase64 = e.target.result;
             elements.imagePreview.src = selectedImageBase64;
-            elements.imagePreviewContainer.style.display = 'inline-block';
+            elements.imagePreviewContainer.style.display = 'block';
+            updateSendButtonMode(); // تحويل الزر لوضع الإرسال
         };
         reader.readAsDataURL(file);
     }
@@ -175,49 +159,70 @@ elements.removeImageBtn.addEventListener('click', () => {
     selectedImageBase64 = null;
     elements.imagePreviewContainer.style.display = 'none';
     elements.imageUpload.value = '';
+    updateSendButtonMode();
 });
 
-// --- منطقة الإدخال والإرسال ---
+// شريط الإدخال وتغير الزر الأزرق
 elements.messageInput.addEventListener('input', function() {
-    this.style.height = 'auto';
+    this.style.height = '40px';
     this.style.height = (this.scrollHeight) + 'px';
+    updateSendButtonMode();
 });
+
+function updateSendButtonMode() {
+    const text = elements.messageInput.value.trim();
+    if (text.length > 0 || selectedImageBase64) {
+        // وضع الإرسال
+        elements.dynamicSendBtn.classList.remove('voice-mode');
+        elements.dynamicSendBtn.classList.add('send-mode');
+        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+    } else {
+        // وضع الصوت (الافتراضي)
+        elements.dynamicSendBtn.classList.add('voice-mode');
+        elements.dynamicSendBtn.classList.remove('send-mode');
+        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-water"></i>';
+    }
+}
 
 elements.messageInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        handleAction();
     }
 });
 
-elements.sendBtn.addEventListener('click', sendMessage);
+elements.dynamicSendBtn.addEventListener('click', handleAction);
+
+function handleAction() {
+    if (elements.dynamicSendBtn.classList.contains('send-mode')) {
+        sendMessage();
+    } else {
+        alert('ميزة الإدخال الصوتي غير مفعلة حالياً. (تتطلب تصريح الميكروفون)');
+    }
+}
 
 function sendMessage() {
     const text = elements.messageInput.value.trim();
     if (!text && !selectedImageBase64) return;
 
-    // التأكد من وجود دردشة نشطة
     if (!currentChatId || !chats[currentChatId]) {
         currentChatId = Date.now().toString();
         chats[currentChatId] = { title: text.substring(0, 20) || "صورة مرسلة", messages: [] };
         renderChatList();
     }
 
-    // إخفاء شاشة الترحيب
     elements.welcomeScreen.style.display = 'none';
     elements.chatContainer.style.display = 'flex';
 
-    // حفظ وعرض رسالة المستخدم
     const userMsg = { role: 'user', content: text, image: selectedImageBase64 };
     chats[currentChatId].messages.push(userMsg);
     appendMessageUI('user', text, selectedImageBase64);
     
-    // إعادة ضبط حقل الإدخال
     elements.messageInput.value = '';
-    elements.messageInput.style.height = 'auto';
-    elements.removeImageBtn.click(); // مسح الصورة
+    elements.messageInput.style.height = '40px';
+    if(selectedImageBase64) elements.removeImageBtn.click();
+    updateSendButtonMode(); // إعادة الزر للموجة الزرقاء
     
-    // تحديث العنوان إذا كانت أول رسالة
     if (chats[currentChatId].messages.length === 1 && text) {
         chats[currentChatId].title = text.substring(0, 20) + "...";
         renderChatList();
@@ -225,114 +230,65 @@ function sendMessage() {
     
     saveChats();
     scrollToBottom();
-
-    // محاكاة استدعاء API (وضع الديمو)
     simulateAPIResponse(text, userMsg.image);
 }
 
-// --- واجهة الرسائل (UI Rendering) ---
+// عرض الرسائل
 function appendMessageUI(role, text, imageBase64) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
     
     let imageHTML = imageBase64 ? `<img src="${imageBase64}" class="msg-image">` : '';
     let textHTML = text ? `<p>${text.replace(/\n/g, '<br>')}</p>` : '';
-    
-    // أيقونة المستخدم أو الذكاء الاصطناعي
     let avatarIcon = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
 
     div.innerHTML = `
-        <div class="avatar" style="background: var(--bg-input); display:flex; align-items:center; justify-content:center; color: var(--text-main);">
+        <div class="avatar" style="background: var(--bg-sidebar); border: 1px solid var(--border-color); display:flex; align-items:center; justify-content:center; color: var(--text-main);">
             ${avatarIcon}
         </div>
         <div class="msg-bubble">
             ${imageHTML}
             ${textHTML}
-            <div class="msg-actions">
-                ${role === 'ai' ? `<i class="far fa-copy" onclick="copyText(this)" title="نسخ"></i>` : ''}
-                <span style="font-size: 10px;">${new Date().toLocaleTimeString()}</span>
-            </div>
         </div>
     `;
     elements.chatContainer.appendChild(div);
 }
 
-function scrollToBottom() {
-    elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
-}
+function scrollToBottom() { elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight; }
 
-window.copyText = function(btn) {
-    const text = btn.parentElement.parentElement.querySelector('p').innerText;
-    navigator.clipboard.writeText(text);
-    btn.className = "fas fa-check";
-    setTimeout(() => btn.className = "far fa-copy", 2000);
-}
-
-// --- محاكاة الذكاء الاصطناعي (API Simulation) ---
+// الذكاء الاصطناعي (وهمي)
 function simulateAPIResponse(userText, hasImage) {
-    // إضافة رسالة "جاري التفكير..."
     const thinkingDiv = document.createElement('div');
     thinkingDiv.className = 'message ai thinking-msg';
-    thinkingDiv.innerHTML = `
-        <div class="avatar" style="background: var(--bg-input); display:flex; align-items:center; justify-content:center;"><i class="fas fa-robot"></i></div>
-        <div class="msg-bubble" style="font-style: italic; color: var(--text-muted);">جاري التفكير...</div>
-    `;
+    thinkingDiv.innerHTML = `<div class="avatar" style="background: var(--bg-sidebar); border: 1px solid var(--border-color); display:flex; align-items:center; justify-content:center;"><i class="fas fa-robot"></i></div>
+        <div class="msg-bubble" style="color: var(--text-muted);"><i class="fas fa-circle-notch fa-spin"></i> جاري التفكير...</div>`;
     elements.chatContainer.appendChild(thinkingDiv);
     scrollToBottom();
 
     setTimeout(() => {
-        // إزالة رسالة جاري التفكير
         elements.chatContainer.removeChild(thinkingDiv);
-
-        let aiResponse = "هذا رد تجريبي لأنك لم تقم بإدخال مفتاح API حقيقي. يمكنك تعديل الكود لربطه مع OpenAI أو أي مزود آخر.";
+        let aiResponse = "هذا الرد تم توليده لتجربة الواجهة. الواجهة الآن مطابقة للتطبيق الأصلي!";
+        if (hasImage) aiResponse = "تم استلام الصورة بنجاح وتجهيز الواجهة لعرضها.";
         
-        if (hasImage) {
-            aiResponse = "لقد استلمت الصورة بنجاح. يبدو أنك تريد تحليلها. (هذا رد تجريبي)";
-        } else if (userText.includes("مرحبا")) {
-            aiResponse = "مرحباً بك! كيف يمكنني مساعدتك في مهامك اليوم؟";
-        }
-
-        // حفظ وعرض الرد
         const aiMsg = { role: 'ai', content: aiResponse, image: null };
         chats[currentChatId].messages.push(aiMsg);
         saveChats();
         appendMessageUI('ai', aiResponse, null);
         scrollToBottom();
-
-    }, 1500); // محاكاة تأخير الشبكة
+    }, 1200);
 }
 
-// --- النوافذ المنبثقة والإعدادات (Modals) ---
-elements.userAccountBtn.addEventListener('click', () => {
-    elements.settingsModal.style.display = 'flex';
-});
-
-elements.closeModal.addEventListener('click', () => {
-    elements.settingsModal.style.display = 'none';
-});
-
+// النوافذ
+elements.userAccountBtn.addEventListener('click', () => elements.settingsModal.style.display = 'flex');
+elements.closeModal.addEventListener('click', () => elements.settingsModal.style.display = 'none');
 elements.saveSettingsBtn.addEventListener('click', () => {
     settings.apiKey = elements.apiKeyInput.value;
-    settings.welcomeText = elements.welcomeTextInput.value;
     localStorage.setItem('settings', JSON.stringify(settings));
-    applySettings();
     elements.settingsModal.style.display = 'none';
-    alert("تم حفظ الإعدادات بنجاح!");
 });
-
 elements.clearDataBtn.addEventListener('click', () => {
-    if(confirm('تحذير: سيتم مسح جميع المحادثات والإعدادات بشكل نهائي. هل أنت متأكد؟')) {
-        localStorage.clear();
-        location.reload();
-    }
+    if(confirm('هل أنت متأكد من مسح جميع المحادثات والإعدادات؟')) { localStorage.clear(); location.reload(); }
 });
+window.onclick = function(e) { if (e.target == elements.settingsModal) elements.settingsModal.style.display = "none"; }
 
-// إغلاق النافذة عند الضغط خارجها
-window.onclick = function(event) {
-    if (event.target == elements.settingsModal) {
-        elements.settingsModal.style.display = "none";
-    }
-}
-
-// بدء التشغيل
 init();
