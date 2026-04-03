@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat-btn" class="primary-btn"><i class="fas fa-plus"></i> دردشة جديدة</button>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-chats" placeholder="البحث في الدردشات...">
+            </div>
+            <div class="chat-history" id="chat-history">
+                </div>
+            
+            <div class="user-account" id="user-account-btn">
+                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" class="avatar">
+                <span class="username">المستخدم الحالي</span>
+                <i class="fas fa-ellipsis-h"></i>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button id="toggle-sidebar" class="icon-btn"><i class="fas fa-bars"></i></button>
+                <h2 id="app-title">Chat AI Pro</h2>
+                <button id="theme-toggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+            </header>
+
+            <div class="chat-container" id="chat-container" style="display: none;">
+                </div>
+
+            <div class="welcome-screen" id="welcome-screen">
+                <h1 id="welcome-text">كيف يمكنني مساعدتك اليوم؟</h1>
+                <div class="suggestions">
+                    <button class="suggestion-card" onclick="fillInput('لخص هذا النص: ')">
+                        <i class="fas fa-file-alt"></i>
+                        <span>لخص النص</span>
+                    </button>
+                    <button class="suggestion-card" onclick="fillInput('أنشئ صورة تعبر عن: ')">
+                        <i class="fas fa-image"></i>
+                        <span>أنشئ صورة</span>
+                    </button>
+                    <button class="suggestion-card" onclick="fillInput('اكتب مقالاً مفصلاً عن: ')">
+                        <i class="fas fa-pen"></i>
+                        <span>اكتب مقال</span>
+                    </button>
+                    <button class="suggestion-card" onclick="fillInput('ضع خطة عمل لـ: ')">
+                        <i class="fas fa-tasks"></i>
+                        <span>ضع خطة</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="image-preview-container" id="image-preview-container" style="display: none;">
+                    <img id="image-preview" src="" alt="Preview">
+                    <button id="remove-image"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="input-wrapper">
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                    <label for="image-upload" class="icon-btn" title="رفع صورة"><i class="fas fa-paperclip"></i></label>
+                    <textarea id="message-input" placeholder="اكتب رسالتك هنا... (Shift + Enter لسطر جديد)" rows="1"></textarea>
+                    <button id="send-btn" class="icon-btn send-btn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <div class="footer-text">يمكن للذكاء الاصطناعي ارتكاب أخطاء. يرجى التحقق من المعلومات المهمة.</div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2>الإعدادات</h2>
+            <div class="settings-group">
+                <label>مفتاح API (اختياري)</label>
+                <input type="password" id="api-key-input" placeholder="sk-...">
+            </div>
+            <div class="settings-group">
+                <label>الاسم الترحيبي</label>
+                <input type="text" id="welcome-text-input" value="كيف يمكنني مساعدتك اليوم؟">
+            </div>
+            <button id="clear-data-btn" class="danger-btn"><i class="fas fa-trash"></i> مسح جميع البيانات</button>
+            <button id="save-settings-btn" class="primary-btn" style="margin-top: 15px; width: 100%;">حفظ الإعدادات</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
