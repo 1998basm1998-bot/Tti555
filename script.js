@@ -1,18 +1,11 @@
-/**
- * خبير البرمجة: تم التعديل لتشغيل الواجهة المطابقة للتطبيق.
- * تمت برمجة الزر الأزرق ليتحول لزر إرسال عند الكتابة.
- */
-
-// حالة التطبيق
 let chats = JSON.parse(localStorage.getItem('chats')) || {};
 let currentChatId = null;
 let settings = JSON.parse(localStorage.getItem('settings')) || {
     apiKey: '',
-    isDarkMode: true
+    isDarkMode: false
 };
 let selectedImageBase64 = null;
 
-// عناصر DOM
 const elements = {
     body: document.body,
     themeToggle: document.getElementById('theme-toggle'),
@@ -48,7 +41,6 @@ function init() {
     }
 }
 
-// الإعدادات والمظهر
 function applySettings() {
     if (settings.isDarkMode) {
         elements.body.classList.add('dark-mode');
@@ -64,12 +56,10 @@ elements.themeToggle.addEventListener('click', () => {
     applySettings();
 });
 
-// القائمة الجانبية
 elements.toggleSidebar.addEventListener('click', () => {
     elements.sidebar.classList.toggle('closed');
 });
 
-// إنشاء المحادثات
 elements.newChatBtnHeader.addEventListener('click', createNewChat);
 elements.newChatBtnSidebar.addEventListener('click', createNewChat);
 
@@ -79,7 +69,7 @@ function createNewChat() {
     saveChats();
     renderChatList();
     showWelcomeScreen();
-    elements.sidebar.classList.add('closed'); // إغلاق القائمة عند إنشاء دردشة
+    elements.sidebar.classList.add('closed');
 }
 
 function saveChats() { localStorage.setItem('chats', JSON.stringify(chats)); }
@@ -133,14 +123,6 @@ function showWelcomeScreen() {
     elements.chatContainer.innerHTML = '';
 }
 
-// دالة الاقتراحات
-window.fillInput = function(text) {
-    elements.messageInput.value = text;
-    elements.messageInput.focus();
-    updateSendButtonMode();
-}
-
-// التعامل مع الصور
 elements.imageUpload.addEventListener('change', function() {
     const file = this.files[0];
     if (file) {
@@ -149,7 +131,7 @@ elements.imageUpload.addEventListener('change', function() {
             selectedImageBase64 = e.target.result;
             elements.imagePreview.src = selectedImageBase64;
             elements.imagePreviewContainer.style.display = 'block';
-            updateSendButtonMode(); // تحويل الزر لوضع الإرسال
+            updateSendButtonMode();
         };
         reader.readAsDataURL(file);
     }
@@ -162,9 +144,8 @@ elements.removeImageBtn.addEventListener('click', () => {
     updateSendButtonMode();
 });
 
-// شريط الإدخال وتغير الزر الأزرق
 elements.messageInput.addEventListener('input', function() {
-    this.style.height = '40px';
+    this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
     updateSendButtonMode();
 });
@@ -172,15 +153,13 @@ elements.messageInput.addEventListener('input', function() {
 function updateSendButtonMode() {
     const text = elements.messageInput.value.trim();
     if (text.length > 0 || selectedImageBase64) {
-        // وضع الإرسال
+        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
         elements.dynamicSendBtn.classList.remove('voice-mode');
         elements.dynamicSendBtn.classList.add('send-mode');
-        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
     } else {
-        // وضع الصوت (الافتراضي)
+        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-align-center" style="transform: rotate(90deg);"></i>';
         elements.dynamicSendBtn.classList.add('voice-mode');
         elements.dynamicSendBtn.classList.remove('send-mode');
-        elements.dynamicSendBtn.innerHTML = '<i class="fas fa-water"></i>';
     }
 }
 
@@ -196,8 +175,6 @@ elements.dynamicSendBtn.addEventListener('click', handleAction);
 function handleAction() {
     if (elements.dynamicSendBtn.classList.contains('send-mode')) {
         sendMessage();
-    } else {
-        alert('ميزة الإدخال الصوتي غير مفعلة حالياً. (تتطلب تصريح الميكروفون)');
     }
 }
 
@@ -219,9 +196,9 @@ function sendMessage() {
     appendMessageUI('user', text, selectedImageBase64);
     
     elements.messageInput.value = '';
-    elements.messageInput.style.height = '40px';
+    elements.messageInput.style.height = 'auto';
     if(selectedImageBase64) elements.removeImageBtn.click();
-    updateSendButtonMode(); // إعادة الزر للموجة الزرقاء
+    updateSendButtonMode();
     
     if (chats[currentChatId].messages.length === 1 && text) {
         chats[currentChatId].title = text.substring(0, 20) + "...";
@@ -233,7 +210,6 @@ function sendMessage() {
     simulateAPIResponse(text, userMsg.image);
 }
 
-// عرض الرسائل
 function appendMessageUI(role, text, imageBase64) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
@@ -256,7 +232,6 @@ function appendMessageUI(role, text, imageBase64) {
 
 function scrollToBottom() { elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight; }
 
-// الذكاء الاصطناعي (وهمي)
 function simulateAPIResponse(userText, hasImage) {
     const thinkingDiv = document.createElement('div');
     thinkingDiv.className = 'message ai thinking-msg';
@@ -278,7 +253,6 @@ function simulateAPIResponse(userText, hasImage) {
     }, 1200);
 }
 
-// النوافذ
 elements.userAccountBtn.addEventListener('click', () => elements.settingsModal.style.display = 'flex');
 elements.closeModal.addEventListener('click', () => elements.settingsModal.style.display = 'none');
 elements.saveSettingsBtn.addEventListener('click', () => {
